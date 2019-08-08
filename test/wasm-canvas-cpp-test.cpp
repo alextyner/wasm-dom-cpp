@@ -1,5 +1,8 @@
 #include <memory>
 #include "../canvas.cpp"
+#include "../window.cpp"
+
+using namespace DOM;
 
 int main() {
     auto canvas = HTMLCanvasElement("testCanvas");
@@ -7,4 +10,5 @@ int main() {
     ctx.moveTo(0, 0);
     ctx.lineTo(200, 100);
     ctx.stroke();
+    window.getInnerHeight();
 }

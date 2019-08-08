@@ -6,7 +6,10 @@
  */
 
 #include <emscripten.h>
+#include <optional>
 #include <string>
+
+namespace DOM {
 
 class HTMLCanvasElement {
    private:
@@ -237,17 +240,17 @@ class HTMLCanvasElement {
         }
         void restore() {
             EM_ASM({ document.getElementById(UTF8ToString($0)).getContext('2d').restore(); }, canvasId.c_str());
-        }/*
+        } /*
         std::shared_ptr<HTMLCanvasElement> const getCanvas() {
             return std::make_shared<HTMLCanvasElement>(canvas);
         }*/
     };
 
     std::string id;
-    CanvasRenderingContext2D ctx2d;
+    std::optional<CanvasRenderingContext2D> ctx2d;
 
    public:
-    HTMLCanvasElement(char const *id) : id(id), ctx2d(id) {}
+    HTMLCanvasElement(char const *id) : id(id) {}
 
     int getWidth() {
         return EM_ASM_INT({ return document.getElementById(UTF8ToString($0)).width; }, id.c_str());
@@ -262,9 +265,16 @@ class HTMLCanvasElement {
         EM_ASM({ document.getElementById(UTF8ToString($0)).height = $1; }, id.c_str(), height);
     }
     CanvasRenderingContext2D const &getContext(char const *contextType) {
+        // Whether context objects are stored as plain members constructed along with the Canvas,
+        // as std::optional constructed on access, or as pointers dynamically allocated on access,
+        // their lifetime is limited by the lifetime of the Canvas
         std::string contextTypeString(contextType);
         if (contextTypeString.compare("2d") && contextTypeString.compare("2D"))  // !=
             throw std::invalid_argument("Only 2D rendering context is supported.");
-        return ctx2d;
+        if (!ctx2d)
+            ctx2d = CanvasRenderingContext2D(contextType);
+        return ctx2d.value();
     }
 };
+
+}  // namespace DOM
