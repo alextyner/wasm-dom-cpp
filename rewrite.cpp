@@ -5,7 +5,7 @@
 #include "../../includes/emscripten/system/include/emscripten.h"
 
 #define STRCAT(x, y) x.y
-
+namespace wasm {
 class JSObject {
  protected:
  public:
@@ -571,8 +571,9 @@ class HTMLDocument : public JSObject {
     return HTMLElement(std::string("#").append(id));
   }
 };
-
+}  // namespace wasm
 int main(int argc, char **argv) {
+  using namespace wasm;
   auto document = HTMLDocument::current();
   auto canvas = document.getElementById("canvas").cast<HTMLCanvasElement>();
 
