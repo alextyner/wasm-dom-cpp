@@ -4,8 +4,8 @@
 #include <variant>
 #include "../../includes/emscripten/system/include/emscripten.h"
 
-#define STRCAT(x, y) x.y
 namespace wasm {
+
 class JSObject {
  protected:
  public:
@@ -18,122 +18,121 @@ class JSObject {
 
 class HTMLElement : public JSObject {
  private:
-  std::string query;
-
  protected:
-  std::string &getQuery() { return query; }
+  std::string query;
+  HTMLElement() {}
+  std::string const &getQuery() const { return query; }
 
  public:
-  HTMLElement() {}
-  HTMLElement(std::string const &query) : query(query) {}
+  HTMLElement(std::string const &query) : query(query) {
+    EM_ASM(
+        {
+          if (typeof(Module._wasm_cpp_dict) == 'undefined') {
+            Module._wasm_cpp_dict = {};
+          }
+          let query = UTF8ToString($0);
+          Module._wasm_cpp_dict[query] = document.querySelector(query);
+        },
+        query.c_str());
+  }
 };
 
 class HTMLCanvasElement : public HTMLElement {
  private:
   class CanvasRenderingContext2D : public HTMLElement {
-   private:
+   protected:
     CanvasRenderingContext2D() {}
+    CanvasRenderingContext2D(std::string const &query) {
+      this->query = std::string(query).append("_CanvasRenderingContext2D");
+      EM_ASM(
+          {
+            if (typeof(Module._wasm_cpp_dict) == 'undefined') {
+              Module._wasm_cpp_dict = {};
+            }
+            let query = UTF8ToString($0);
+            Module._wasm_cpp_dict[query + '_CanvasRenderingContext2D'] =
+                document.querySelector(query).getContext('2d');
+          },
+          query.c_str());
+    }
 
    public:
     static CanvasRenderingContext2D const &current(std::string const &query) {
-      static HTMLElement current_(query);
-      return current_.cast<CanvasRenderingContext2D>();
+      static CanvasRenderingContext2D current_(query);
+      return current_;
     }
-    void clearRect(double x, double y, double width, double height) {
+    void clearRect(double x, double y, double width, double height) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .clearRect($1, $2, $3, $4);
+            Module._wasm_cpp_dict[UTF8ToString($0)].clearRect($1, $2, $3, $4);
           },
           getQuery().c_str(), x, y, width, height);
     }
-    void fillRect(double x, double y, double width, double height) {
+    void fillRect(double x, double y, double width, double height) const {
+      EM_ASM(
+          { Module._wasm_cpp_dict[UTF8ToString($0)].fillRect($1, $2, $3, $4); },
+          getQuery().c_str(), x, y, width, height);
+    }
+    void strokeRect(double x, double y, double width, double height) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .fillRect($1, $2, $3, $4);
+            Module._wasm_cpp_dict[UTF8ToString($0)].strokeRect($1, $2, $3, $4);
           },
           getQuery().c_str(), x, y, width, height);
     }
-    void strokeRect(double x, double y, double width, double height) {
+    void fillText(char const *text, double x, double y) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .strokeRect($1, $2, $3, $4);
-          },
-          getQuery().c_str(), x, y, width, height);
-    }
-    void fillText(char const *text, double x, double y) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .fillText(UTF8ToString($1), $2, $3);
+            Module._wasm_cpp_dict[UTF8ToString($0)].fillText(UTF8ToString($1),
+                                                             $2, $3);
           },
           getQuery().c_str(), text, x, y);
     }
-    void fillText(char const *text, double x, double y, double maxWidth) {
+    void fillText(char const *text, double x, double y, double maxWidth) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .fillText(UTF8ToString($1), $2, $3, $4);
+            Module._wasm_cpp_dict[UTF8ToString($0)].fillText(UTF8ToString($1),
+                                                             $2, $3, $4);
           },
           getQuery().c_str(), text, x, y, maxWidth);
     }
-    void strokeText(char const *text, double x, double y) {
+    void strokeText(char const *text, double x, double y) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .strokeText(UTF8ToString($1), $2, $3);
+            Module._wasm_cpp_dict[UTF8ToString($0)].strokeText(UTF8ToString($1),
+                                                               $2, $3);
           },
           getQuery().c_str(), text, x, y);
     }
-    void strokeText(char const *text, double x, double y, double maxWidth) {
+    void strokeText(char const *text, double x, double y,
+                    double maxWidth) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .strokeText(UTF8ToString($1), $2, $3, $4);
+            Module._wasm_cpp_dict[UTF8ToString($0)].strokeText(UTF8ToString($1),
+                                                               $2, $3, $4);
           },
           getQuery().c_str(), text, x, y, maxWidth);
     }
-    void setLineWidth(double value) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .lineWidth = ($1);
-          },
-          getQuery().c_str(), value);
+    void setLineWidth(double value) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].lineWidth = ($1); },
+             getQuery().c_str(), value);
     }
-    double getLineWidth() {
+    double getLineWidth() const {
       return EM_ASM_DOUBLE(
-          {
-            return document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .lineWidth;
-          },
+          { return Module._wasm_cpp_dict[UTF8ToString($0)].lineWidth; },
           getQuery().c_str());
     }
-    void setLineCap(const char *type) {
+    void setLineCap(const char *type) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0)).getContext('2d').lineCap =
-                UTF8ToString($1);
+            Module._wasm_cpp_dict[UTF8ToString($0)].lineCap = UTF8ToString($1);
           },
           getQuery().c_str(), type);
     }
-    std::string getLineCap() {
+    std::string getLineCap() const {
       char *jsString = (char *)EM_ASM_INT(
           {
-            var string = document.querySelector(UTF8ToString($0))
-                             .getContext('2d')
-                             .lineCap;
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)].lineCap;
             var strlen = lengthBytesUTF8(string) + 1;
             var strptr = _malloc(strlen);
             stringToUTF8(string, strptr, strlen);
@@ -144,20 +143,17 @@ class HTMLCanvasElement : public HTMLElement {
       free(jsString);
       return ret;
     }
-    void setLineJoin(char const *type) {
+    void setLineJoin(char const *type) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0)).getContext('2d').lineJoin =
-                UTF8ToString($1);
+            Module._wasm_cpp_dict[UTF8ToString($0)].lineJoin = UTF8ToString($1);
           },
           getQuery().c_str(), type);
     }
-    std::string getLineJoin() {
+    std::string getLineJoin() const {
       char *jsString = (char *)EM_ASM_INT(
           {
-            var string = document.querySelector(UTF8ToString($0))
-                             .getContext('2d')
-                             .lineJoin;
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)].lineJoin;
             var strlen = lengthBytesUTF8(string) + 1;
             var strptr = _malloc(strlen);
             stringToUTF8(string, strptr, strlen);
@@ -168,11 +164,10 @@ class HTMLCanvasElement : public HTMLElement {
       free(jsString);
       return ret;
     }
-    std::string getFont() {
+    std::string getFont() const {
       char *jsString = (char *)EM_ASM_INT(
           {
-            var string =
-                document.querySelector(UTF8ToString($0)).getContext('2d').font;
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)].font;
             var strlen = lengthBytesUTF8(string) + 1;
             var strptr = _malloc(strlen);
             stringToUTF8(string, strptr, strlen);
@@ -183,20 +178,37 @@ class HTMLCanvasElement : public HTMLElement {
       free(jsString);
       return ret;
     }
-    void setFont(char const *value) {
+    void setFont(char const *value) const {
+      EM_ASM(
+          { Module._wasm_cpp_dict[UTF8ToString($0)].font = UTF8ToString($1); },
+          getQuery().c_str(), value);
+    }
+    std::string getTextAlign() const {
+      char *jsString = (char *)EM_ASM_INT(
+          {
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)].textAlign;
+            var strlen = lengthBytesUTF8(string) + 1;
+            var strptr = _malloc(strlen);
+            stringToUTF8(string, strptr, strlen);
+            return strptr;
+          },
+          getQuery().c_str());
+      std::string ret(jsString);
+      free(jsString);
+      return ret;
+    }
+    void setTextAlign(char const *value) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0)).getContext('2d').font =
+            Module._wasm_cpp_dict[UTF8ToString($0)].textAlign =
                 UTF8ToString($1);
           },
           getQuery().c_str(), value);
     }
-    std::string getTextAlign() {
+    std::string getFillStyle() const {
       char *jsString = (char *)EM_ASM_INT(
           {
-            var string = document.querySelector(UTF8ToString($0))
-                             .getContext('2d')
-                             .textAlign;
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)].fillStyle;
             var strlen = lengthBytesUTF8(string) + 1;
             var strptr = _malloc(strlen);
             stringToUTF8(string, strptr, strlen);
@@ -207,21 +219,18 @@ class HTMLCanvasElement : public HTMLElement {
       free(jsString);
       return ret;
     }
-    void setTextAlign(char const *value) {
+    void setFillStyle(char const *value) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .textAlign = UTF8ToString($1);
+            Module._wasm_cpp_dict[UTF8ToString($0)].fillStyle =
+                UTF8ToString($1);
           },
           getQuery().c_str(), value);
     }
-    std::string getFillStyle() {
+    std::string getStrokeStyle() const {
       char *jsString = (char *)EM_ASM_INT(
           {
-            var string = document.querySelector(UTF8ToString($0))
-                             .getContext('2d')
-                             .fillStyle;
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)].strokeStyle;
             var strlen = lengthBytesUTF8(string) + 1;
             var strptr = _malloc(strlen);
             stringToUTF8(string, strptr, strlen);
@@ -232,256 +241,158 @@ class HTMLCanvasElement : public HTMLElement {
       free(jsString);
       return ret;
     }
-    void setFillStyle(char const *value) {
+    void setStrokeStyle(char const *value) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .fillStyle = UTF8ToString($1);
+            Module._wasm_cpp_dict[UTF8ToString($0)].strokeStyle =
+                UTF8ToString($1);
           },
           getQuery().c_str(), value);
     }
-    std::string getStrokeStyle() {
-      char *jsString = (char *)EM_ASM_INT(
-          {
-            var string = document.querySelector(UTF8ToString($0))
-                             .getContext('2d')
-                             .strokeStyle;
-            var strlen = lengthBytesUTF8(string) + 1;
-            var strptr = _malloc(strlen);
-            stringToUTF8(string, strptr, strlen);
-            return strptr;
-          },
-          getQuery().c_str());
-      std::string ret(jsString);
-      free(jsString);
-      return ret;
+    void beginPath() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].beginPath(); },
+             getQuery().c_str());
     }
-    void setStrokeStyle(char const *value) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .strokeStyle = UTF8ToString($1);
-          },
-          getQuery().c_str(), value);
+    void closePath() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].closePath(); },
+             getQuery().c_str());
     }
-    void beginPath() {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .beginPath();
-          },
-          getQuery().c_str());
+    void moveTo(double x, double y) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].moveTo($1, $2); },
+             getQuery().c_str(), x, y);
     }
-    void closePath() {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .closePath();
-          },
-          getQuery().c_str());
-    }
-    void moveTo(double x, double y) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .moveTo($1, $2);
-          },
-          getQuery().c_str(), x, y);
-    }
-    void lineTo(double x, double y) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .lineTo($1, $2);
-          },
-          getQuery().c_str(), x, y);
+    void lineTo(double x, double y) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].lineTo($1, $2); },
+             getQuery().c_str(), x, y);
     }
     void bezierCurveTo(double cp1x, double cp1y, double cp2x, double cp2y,
-                       double x, double y) {
+                       double x, double y) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .bezierCurveTo($1, $2, $3, $4, $5, $6);
+            Module._wasm_cpp_dict[UTF8ToString($0)].bezierCurveTo($1, $2, $3,
+                                                                  $4, $5, $6);
           },
           getQuery().c_str(), cp1x, cp1y, cp2x, cp2y, x, y);
     }
-    void quadraticCurveTo(double cpx, double cpy, double x, double y) {
+    void quadraticCurveTo(double cpx, double cpy, double x, double y) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .quadraticCurveTo($1, $2, $3, $4);
+            Module._wasm_cpp_dict[UTF8ToString($0)].quadraticCurveTo($1, $2, $3,
+                                                                     $4);
           },
           getQuery().c_str(), cpx, cpy, x, y);
     }
     void arc(double x, double y, double radius, double startAngle,
-             double endAngle) {
+             double endAngle) const {
       EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .arc($1, $2, $3, $4, $5);
-          },
+          { Module._wasm_cpp_dict[UTF8ToString($0)].arc($1, $2, $3, $4, $5); },
           getQuery().c_str(), x, y, radius, startAngle, endAngle);
     }
-    void arcTo(double x1, double y1, double x2, double y2, double radius) {
+    void arcTo(double x1, double y1, double x2, double y2,
+               double radius) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .arcTo($1, $2, $3, $4, $5);
+            Module._wasm_cpp_dict[UTF8ToString($0)].arcTo($1, $2, $3, $4, $5);
           },
           getQuery().c_str(), x1, y1, x2, y2, radius);
     }
     void ellipse(double x, double y, double radiusX, double radiusY,
-                 double rotation, double startAngle, double endAngle) {
+                 double rotation, double startAngle, double endAngle) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .ellipse($1, $2, $3, $4, $5, $6, $7);
+            Module._wasm_cpp_dict[UTF8ToString($0)].ellipse($1, $2, $3, $4, $5,
+                                                            $6, $7);
           },
           getQuery().c_str(), x, y, radiusX, radiusY, rotation, startAngle,
           endAngle);
     }
-    void rect(double x, double y, double width, double height) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .rect($1, $2, $3, $4);
-          },
-          getQuery().c_str(), x, y, width, height);
+    void rect(double x, double y, double width, double height) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].rect($1, $2, $3, $4); },
+             getQuery().c_str(), x, y, width, height);
     }
-    void fill() {
-      EM_ASM(
-          { document.querySelector(UTF8ToString($0)).getContext('2d').fill(); },
-          getQuery().c_str());
+    void fill() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].fill(); },
+             getQuery().c_str());
     }
-    void stroke() {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0)).getContext('2d').stroke();
-          },
-          getQuery().c_str());
+    void stroke() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].stroke(); },
+             getQuery().c_str());
     }
-    void clip() {
-      EM_ASM(
-          { document.querySelector(UTF8ToString($0)).getContext('2d').clip(); },
-          getQuery().c_str());
+    void clip() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].clip(); },
+             getQuery().c_str());
     }
-    bool isPointInPath(double x, double y) {
+    bool isPointInPath(double x, double y) const {
       return EM_ASM_INT(
           {
-            return document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .isPointInPath($1, $2);
+            return Module._wasm_cpp_dict[UTF8ToString($0)].isPointInPath($1,
+                                                                         $2);
           },
           getQuery().c_str(), x, y);
     }
-    bool isPointInStroke(double x, double y) {
+    bool isPointInStroke(double x, double y) const {
       return EM_ASM_INT(
           {
-            return document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .isPointInStroke($1, $2);
+            return Module._wasm_cpp_dict[UTF8ToString($0)].isPointInStroke($1,
+                                                                           $2);
           },
           getQuery().c_str(), x, y);
     }
-    void rotate(double angle) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .rotate($1);
-          },
-          getQuery().c_str(), angle);
+    void rotate(double angle) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].rotate($1); },
+             getQuery().c_str(), angle);
     }
-    void scale(double x, double y) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .scale($1, $2);
-          },
-          getQuery().c_str(), x, y);
+    void scale(double x, double y) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].scale($1, $2); },
+             getQuery().c_str(), x, y);
     }
-    void translate(double x, double y) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .translate($1, $2);
-          },
-          getQuery().c_str(), x, y);
+    void translate(double x, double y) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].translate($1, $2); },
+             getQuery().c_str(), x, y);
     }
-    void transform(double a, double b, double c, double d, double e, double f) {
+    void transform(double a, double b, double c, double d, double e,
+                   double f) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .transform($1, $2, $3, $4, $5, $6);
+            Module._wasm_cpp_dict[UTF8ToString($0)].transform($1, $2, $3, $4,
+                                                              $5, $6);
           },
           getQuery().c_str(), a, b, c, d, e, f);
     }
     void setTransform(double a, double b, double c, double d, double e,
-                      double f) {
+                      double f) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .setTransform($1, $2, $3, $4, $5, $6);
+            Module._wasm_cpp_dict[UTF8ToString($0)].setTransform($1, $2, $3, $4,
+                                                                 $5, $6);
           },
           getQuery().c_str(), a, b, c, d, e, f);
     }
-    void resetTransform() {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .resetTransform();
-          },
-          getQuery().c_str());
+    void resetTransform() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].resetTransform(); },
+             getQuery().c_str());
     }
-    void setGlobalAlpha(double value) {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .globalAlpha = $1;
-          },
-          getQuery().c_str(), value);
+    void setGlobalAlpha(double value) const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].globalAlpha = $1; },
+             getQuery().c_str(), value);
     }
-    double getGlobalAlpha() {
+    double getGlobalAlpha() const {
       return EM_ASM_DOUBLE(
-          {
-            return document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .globalAlpha;
-          },
+          { return Module._wasm_cpp_dict[UTF8ToString($0)].globalAlpha; },
           getQuery().c_str());
     }
-    void setGlobalCompositeOperation(const char *value) {
+    void setGlobalCompositeOperation(const char *value) const {
       EM_ASM(
           {
-            document.querySelector(UTF8ToString($0))
-                .getContext('2d')
-                .globalCompositeOperation = $1;
+            Module._wasm_cpp_dict[UTF8ToString($0)].globalCompositeOperation =
+                $1;
           },
           getQuery().c_str(), value);
     }
-    std::string getGlobalCompositeOperation() {
+    std::string getGlobalCompositeOperation() const {
       char *jsString = (char *)EM_ASM_INT(
           {
-            var string = document.querySelector(UTF8ToString($0))
-                             .getContext('2d')
+            var string = Module._wasm_cpp_dict[UTF8ToString($0)]
                              .globalCompositeOperation;
             var strlen = lengthBytesUTF8(string) + 1;
             var strptr = _malloc(strlen);
@@ -493,17 +404,13 @@ class HTMLCanvasElement : public HTMLElement {
       free(jsString);
       return ret;
     }
-    void save() {
-      EM_ASM(
-          { document.querySelector(UTF8ToString($0)).getContext('2d').save(); },
-          getQuery().c_str());
+    void save() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].save(); },
+             getQuery().c_str());
     }
-    void restore() {
-      EM_ASM(
-          {
-            document.querySelector(UTF8ToString($0)).getContext('2d').restore();
-          },
-          getQuery().c_str());
+    void restore() const {
+      EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].restore(); },
+             getQuery().c_str());
     }
   };
 
@@ -513,20 +420,19 @@ class HTMLCanvasElement : public HTMLElement {
   }
   int getHeight() {
     return EM_ASM_INT(
-        { return document.querySelector(UTF8ToString($0)).height; },
+        { return Module._wasm_cpp_dict[UTF8ToString($0)].height; },
         getQuery().c_str());
   }
   void setHeight(int height) {
-    EM_ASM({ document.querySelector(UTF8ToString($0)).height = $1; },
+    EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].height = $1; },
            getQuery().c_str(), height);
   }
   int getWidth() {
-    return EM_ASM_INT(
-        { return document.querySelector(UTF8ToString($0)).width; },
-        getQuery().c_str());
+    return EM_ASM_INT({ return Module._wasm_cpp_dict[UTF8ToString($0)].width; },
+                      getQuery().c_str());
   }
   void setWidth(int width) {
-    EM_ASM({ document.querySelector(UTF8ToString($0)).width = $1; },
+    EM_ASM({ Module._wasm_cpp_dict[UTF8ToString($0)].width = $1; },
            getQuery().c_str(), width);
   }
 };
@@ -570,22 +476,37 @@ class HTMLDocument : public JSObject {
   static HTMLElement getElementById(std::string const &id) {
     return HTMLElement(std::string("#").append(id));
   }
+
+  static HTMLElement querySelector(std::string const &query) {
+    return HTMLElement(query);
+  }
 };
 }  // namespace wasm
 int main(int argc, char **argv) {
   using namespace wasm;
+  std::cout << 1 << std::endl;
   auto document = HTMLDocument::current();
   auto canvas = document.getElementById("canvas").cast<HTMLCanvasElement>();
 
+  std::cout << 2 << std::endl;
   auto window = Window::current();
   canvas.setHeight(window.getInnerHeight());
   canvas.setWidth(window.getInnerWidth());
 
+  std::cout << 3 << std::endl;
   std::cout << "H: " << canvas.getHeight() << " W: " << canvas.getWidth()
             << std::endl;
 
+  std::cout << 4 << std::endl;
   auto ctx = canvas.getContext("2d");
 
   ctx.setFillStyle("#AAAFFF");
   ctx.fillRect(0, 0, 60, 60);
+
+  std::cout << 5 << std::endl;
+
+  canvas.getContext("2d").fillRect(0, 0, 200, 60);
+
+  document.getElementById("canvas").cast<HTMLCanvasElement>().getContext("2d").fillRect(0, 0, 100, 100);
+  return 0;
 }
