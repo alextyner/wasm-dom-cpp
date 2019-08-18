@@ -1,41 +1,11 @@
-#include <iostream>
-#include <memory>
+#ifndef WASM_DOM_HTMLCANVASELEMENT_HPP
+#define WASM_DOM_HTMLCANVASELEMENT_HPP
+
+#include <emscripten.h>
 #include <string>
-#include <variant>
-#include "../../includes/emscripten/system/include/emscripten.h"
+#include "HTMLElement.hpp"
 
-namespace wasm {
-
-class JSObject {
- protected:
- public:
-  template <typename T>
-  T &cast() {
-    return *reinterpret_cast<T *>(this);
-  }
-  virtual ~JSObject() = default;
-};
-
-class HTMLElement : public JSObject {
- private:
- protected:
-  std::string query;
-  HTMLElement() {}
-  std::string const &getQuery() const { return query; }
-
- public:
-  HTMLElement(std::string const &query) : query(query) {
-    EM_ASM(
-        {
-          if (typeof(Module._wasm_cpp_dict) == 'undefined') {
-            Module._wasm_cpp_dict = {};
-          }
-          let query = UTF8ToString($0);
-          Module._wasm_cpp_dict[query] = document.querySelector(query);
-        },
-        query.c_str());
-  }
-};
+namespace dom {
 
 class HTMLCanvasElement : public HTMLElement {
  private:
@@ -49,7 +19,7 @@ class HTMLCanvasElement : public HTMLElement {
             if (typeof(Module._wasm_cpp_dict) == 'undefined') {
               Module._wasm_cpp_dict = {};
             }
-            let query = UTF8ToString($0);
+            var query = UTF8ToString($0);
             Module._wasm_cpp_dict[query + '_CanvasRenderingContext2D'] =
                 document.querySelector(query).getContext('2d');
           },
@@ -88,7 +58,8 @@ class HTMLCanvasElement : public HTMLElement {
           },
           getQuery().c_str(), text, x, y);
     }
-    void fillText(char const *text, double x, double y, double maxWidth) const {
+    void fillText(char const *text, double x, double y,
+                  double maxWidth) const {
       EM_ASM(
           {
             Module._wasm_cpp_dict[UTF8ToString($0)].fillText(UTF8ToString($1),
@@ -122,7 +93,7 @@ class HTMLCanvasElement : public HTMLElement {
           { return Module._wasm_cpp_dict[UTF8ToString($0)].lineWidth; },
           getQuery().c_str());
     }
-    void setLineCap(const char *type) const {
+    void setLineCap(char const *type) const {
       EM_ASM(
           {
             Module._wasm_cpp_dict[UTF8ToString($0)].lineCap = UTF8ToString($1);
@@ -415,7 +386,7 @@ class HTMLCanvasElement : public HTMLElement {
   };
 
  public:
-  CanvasRenderingContext2D const &getContext(std::string const &contextType) {
+  CanvasRenderingContext2D const &getContext(std::string const &contextType) const {
     return CanvasRenderingContext2D::current(getQuery());
   }
   int getHeight() {
@@ -437,76 +408,5 @@ class HTMLCanvasElement : public HTMLElement {
   }
 };
 
-class Window : public JSObject {
- private:
-  Window() {}
-
- public:
-  static Window const &current() {
-    static Window current_;
-    return current_;
-  }
-  static int getInnerHeight() {
-    return EM_ASM_INT({ return window.innerHeight; });
-  }
-  static int getInnerWidth() {
-    return EM_ASM_INT({ return window.innerWidth; });
-  }
-  static int getOuterHeight() {
-    return EM_ASM_INT({ return window.outerHeight; });
-  }
-  static int getOuterWidth() {
-    return EM_ASM_INT({ return window.outerWidth; });
-  }
-  static void blur() {
-    EM_ASM({ window.blur(); });
-  }
-};
-
-class HTMLDocument : public JSObject {
- private:
-  HTMLDocument() {}
-
- public:
-  static HTMLDocument const &current() {
-    static HTMLDocument current_;
-    return current_;
-  }
-
-  static HTMLElement getElementById(std::string const &id) {
-    return HTMLElement(std::string("#").append(id));
-  }
-
-  static HTMLElement querySelector(std::string const &query) {
-    return HTMLElement(query);
-  }
-};
-}  // namespace wasm
-int main(int argc, char **argv) {
-  using namespace wasm;
-  std::cout << 1 << std::endl;
-  auto document = HTMLDocument::current();
-  auto canvas = document.getElementById("canvas").cast<HTMLCanvasElement>();
-
-  std::cout << 2 << std::endl;
-  auto window = Window::current();
-  canvas.setHeight(window.getInnerHeight());
-  canvas.setWidth(window.getInnerWidth());
-
-  std::cout << 3 << std::endl;
-  std::cout << "H: " << canvas.getHeight() << " W: " << canvas.getWidth()
-            << std::endl;
-
-  std::cout << 4 << std::endl;
-  auto ctx = canvas.getContext("2d");
-
-  ctx.setFillStyle("#AAAFFF");
-  ctx.fillRect(0, 0, 60, 60);
-
-  std::cout << 5 << std::endl;
-
-  canvas.getContext("2d").fillRect(0, 0, 200, 60);
-
-  document.getElementById("canvas").cast<HTMLCanvasElement>().getContext("2d").fillRect(0, 0, 100, 100);
-  return 0;
-}
+}  // namespace dom
+#endif
