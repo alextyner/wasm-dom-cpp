@@ -1,5 +1,5 @@
 
-#include "../include/wasm-dom.hpp"
+#include "../../include/wasm-dom.hpp"
 
 constexpr int canvasWidth = 575;
 constexpr int canvasHeight = 1080;
@@ -10,9 +10,6 @@ constexpr int boxVPad = 50;
 constexpr int boxHPad = 25;
 
 using namespace dom;
-
-int x = 25;
-int y = 50;
 
 auto document = HTMLDocument::current();
 auto canvas = document.getElementById("testCanvas").cast<HTMLCanvasElement>();
@@ -30,7 +27,7 @@ void setUp() {
   ctx.setFont("18px sans-serif");
   ctx.setLineWidth(2);
 
-  ctx.translate(x, y);
+  ctx.translate(boxHPad, boxVPad);
 }
 
 void testClearRect() {
@@ -113,14 +110,46 @@ void testSetLineCap() {
   ctx.stroke();
 
   ctx.setLineWidth(2);
+  ctx.setLineCap("butt");
 }
+
+void testGetLineCap() {
+  ctx.fillText("ctx.getLineCap()", 0, 0);
+
+  ctx.setLineWidth(8);
+
+  ctx.beginPath();
+  ctx.moveTo(70, 25);
+  ctx.fillText(ctx.getLineCap().c_str(), 10, 30);
+  ctx.lineTo(boxWidth - 10, 30);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(70, 55);
+  ctx.setLineCap("round");
+  ctx.fillText(ctx.getLineCap().c_str(), 10, 60);
+  ctx.lineTo(boxWidth - 10, 60);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(70, 85);
+  ctx.setLineCap("square");
+  ctx.fillText(ctx.getLineCap().c_str(), 10, 90);
+  ctx.lineTo(boxWidth - 10, 90);
+  ctx.stroke();
+
+  ctx.setLineWidth(2);
+  ctx.setLineCap("butt");
+}
+
+// TODO: more tests
 
 int main(int argc, char** argv) {
   setUp();
 
   auto tests = {testClearRect,    testFillRect,   testStrokeRect,
                 testFillText,     testStrokeText, testSetLineWidth,
-                testGetLineWidth, testSetLineCap};
+                testGetLineWidth, testSetLineCap, testGetLineCap};
 
   int cols = 2;
   int rows = tests.size() % 2 ? tests.size() / 2 + 1 : tests.size() / 2;
