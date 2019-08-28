@@ -1,6 +1,6 @@
 # wasm-dom-cpp
 
-Inspired by my previous C/DOM interaction project, [wasm-canvas](https://github.com/alextyner/wasm-canvas), and the Java/DOM interface included with the [TeaVM](http://teavm.org/) project, this library aims to make proof-of-concept rendering and simple visualization highly accessible to a lower level language like C++.
+Inspired by my previous C/DOM interaction project, [wasm-canvas](https://github.com/alextyner/wasm-canvas), and the Java/DOM interface included with the [TeaVM](https://github.com/konsoletyper/teavm/tree/master/jso/apis/src/main/java/org/teavm/jso) project, this library aims to make proof-of-concept rendering and simple visualization highly accessible to a lower level language like C++.
 
 This project provides a layer of abstraction for manipulating elements of the HTML DOM -- with a focus on the canvas element in particular -- from C++ compiled with [Emscripten](https://emscripten.org/).
 
