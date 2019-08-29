@@ -38,6 +38,6 @@ For more involved compilation examples, see the Makefiles for the projects linke
 
 ## Examples
 
-[Canvas Rendering Function Tests](https://alextyner.github.io/wasm-dom-cpp/ex-all/)
+[Canvas Rendering Function Tests](https://alextyner.github.io/wasm-dom-cpp/ex-features/)
 
 [Basic Physics Simulation](https://alextyner.github.io/wasm-dom-cpp/ex-physics/) (warning: flashing visuals)
