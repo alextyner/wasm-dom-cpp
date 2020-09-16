@@ -4,6 +4,10 @@ Inspired by my previous C/DOM interaction project, [wasm-canvas](https://github.
 
 This project provides a layer of abstraction for manipulating elements of the HTML DOM -- with a focus on the canvas element in particular -- from C++ compiled with [Emscripten](https://emscripten.org/).
 
+![Colorful bouncing balls rendered in the browser with C++ code](docs/ex-physics.gif)
+
+**[test/physics/main.cpp](test/physics/main.cpp)**
+
 ## Goals
 
 Ultimately, I'd like this C++ library to be as feature-complete as the one provided with TeaVM for Java. While possible, such a task would require a more involved approach on the C++ side to make up for the lack of elegant compiler [trickery](http://teavm.org/javadoc/0.5.x/jso/core/org/teavm/jso/JSBody.html) used for the Java implementation.
